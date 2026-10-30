@@ -17,9 +17,34 @@ STAT = re.compile(r'class="sr-only">(\w+): ([^<]+)<')
 ORIG = re.compile(r'<a href="([^"]+)"[^>]*aria-label="Open original on ([^"]+)"')
 
 
+def render_scrolled(max_rounds=60):
+    """Load the page in Camoufox and scroll like a visitor until no new cards appear."""
+    from camoufox.sync_api import Camoufox
+
+    with Camoufox(headless=True) as browser:
+        page = browser.new_page()
+        page.goto(PAGE, wait_until="domcontentloaded")
+        page.wait_for_timeout(4000)
+        count, stable = 0, 0
+        for _ in range(max_rounds):
+            page.mouse.wheel(0, 4000)
+            page.evaluate("document.querySelectorAll('*').forEach(e=>{if(e.scrollHeight>e.clientHeight+50&&getComputedStyle(e).overflowY.match(/auto|scroll/))e.scrollTop=e.scrollHeight})")
+            page.wait_for_timeout(1500)
+            n = page.locator("li[class*=_presetCard]").count()
+            stable = stable + 1 if n == count else 0
+            count = n
+            if stable >= 4:
+                break
+        return page.content()
+
+
 def main():
     args = cli_args(__doc__)
-    html = fetch_text(PAGE)
+    try:
+        html = render_scrolled()
+    except ImportError:
+        print("camoufox not installed, falling back to static HTML (first batch only)")
+        html = fetch_text(PAGE)
     cards = CARD.findall(html)
     if args.limit:
         cards = cards[: args.limit]
