@@ -1,8 +1,7 @@
 """Source: higgsfield.ai/content-factory (server-rendered preset cards).
 
-Only the SSR page is parsed (first batch of presets). Prompts are not in the
-static HTML; TODO: find the paginated API behind the page (needs a browser
-network capture, use Camoufox - not Chrome).
+Scrolls the page in Camoufox until no new cards appear (56 presets as of
+2026-10-31); falls back to static HTML. Prompts are not exposed on the page.
 """
 import re
 
